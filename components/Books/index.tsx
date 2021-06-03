@@ -1,16 +1,20 @@
 import { gql } from "graphql-tag";
-import { useQuery } from "@apollo/client";
-import { AllBooksQuery } from "src/generated/graphql";
+import {
+  useAllBooksWithTitleLazyQuery,
+  AllBooksWithTitleQuery,
+} from "src/generated/graphql";
+import { useDebouncedCallback } from "use-debounce";
 
-const allBooksQuery = gql`
-  query allBooks {
-    books {
+const allBooksWithTitleQuery = gql`
+  query allBooksWithTitle($title: String!) {
+    books: booksWithTitle(title: $title) {
+      id
       title
     }
   }
 `;
 
-function Books({ books }: { books: AllBooksQuery["books"] }) {
+function Books({ books }: { books: AllBooksWithTitleQuery["books"] }) {
   return (
     <ul>
       {books.map((book, idx) => (
@@ -21,26 +25,26 @@ function Books({ books }: { books: AllBooksQuery["books"] }) {
 }
 
 function WrappedBooks() {
-  const { loading, error, data } = useQuery<AllBooksQuery>(allBooksQuery);
+  const [loadBooks, { loading, data }] = useAllBooksWithTitleLazyQuery();
 
-  if (loading) {
-    return <span>Loading...</span>;
-  }
+  const _findBook = (title: string) => {
+    loadBooks({ variables: { title } });
+  };
 
-  if (error) {
-    return <span>Something went wrong: ${error}</span>;
-  }
+  const findBook = useDebouncedCallback(_findBook, 250);
 
-  if (data) {
-    return (
-      <div>
-        <h1>Books</h1>
-        <Books books={data.books} />
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div>
+      <h1>Books</h1>
+      <input
+        className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-4"
+        placeholder="Search..."
+        type="text"
+        onChange={(e) => findBook(e.target.value)}
+      />
+      {data && <Books books={data.books} />}
+    </div>
+  );
 }
 
 export default WrappedBooks;
