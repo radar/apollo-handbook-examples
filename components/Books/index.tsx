@@ -1,5 +1,6 @@
 import { gql } from "graphql-tag";
 import { useQuery } from "@apollo/client";
+import { AllBooksQuery } from "src/generated/graphql";
 
 const allBooksQuery = gql`
   query allBooks {
@@ -9,12 +10,7 @@ const allBooksQuery = gql`
   }
 `;
 
-export type Book = {
-  id: string;
-  title: string;
-};
-
-function Books({ books }: { books: Book[] }) {
+function Books({ books }: { books: AllBooksQuery["books"] }) {
   return (
     <ul>
       {books.map((book, idx) => (
@@ -23,10 +19,6 @@ function Books({ books }: { books: Book[] }) {
     </ul>
   );
 }
-
-type AllBooksQuery = {
-  books: Book[];
-};
 
 function WrappedBooks() {
   const { loading, error, data } = useQuery<AllBooksQuery>(allBooksQuery);
